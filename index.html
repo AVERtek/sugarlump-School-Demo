@@ -70,14 +70,13 @@
             cursor: pointer;
         }
 
-        /* The Play Button Overlay */
         .video-overlay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            pointer-events: none; /* Let clicks pass through to container */
+            pointer-events: none;
             transition: opacity 0.3s ease;
         }
 
@@ -107,6 +106,7 @@
             display: none;
         }
 
+        /* Link List Formatting */
         .link-list h2 {
             font-family: 'Chalet LondonNineteenEighty Regular', sans-serif;
             color: #ff69b4;
@@ -116,8 +116,26 @@
 
         .link-list a {
             color: #59cbe8;
-            text-decoration: none;
+            text-decoration: underline !important;
+            text-decoration-color: currentColor !important;
             font-weight: bold;
+        }
+
+        h2 a {
+            text-decoration: underline !important;
+            text-decoration-color: currentColor !important;
+            color: inherit;
+        }
+
+        /* The Launch Trigger style */
+        .launch-text {
+            font-family: 'Chalet LondonNineteenEighty Regular', sans-serif;
+            color: #ff69b4;
+            font-size: 20px;
+            text-decoration: underline !important;
+            text-decoration-color: currentColor !important;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         .footer-link {
@@ -126,18 +144,49 @@
             font-size: 14px;
             margin-top: 20px;
         }
-        
-        h2 a {
-    text-decoration: underline !important;
-    text-decoration-color: currentColor !important;
-    color: inherit;
-}
 
-/* Optional: Ensures the underline stays consistent when clicked or visited */
-h2 a:link, h2 a:visited {
-    text-decoration: underline !important;
-}
-        
+        /* BANNER STYLES */
+        .banner-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .banner-content {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .banner-bg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 10001;
+        }
     </style>
 </head>
 
@@ -155,7 +204,6 @@ h2 a:link, h2 a:visited {
                 
                 <video id="myVideo" loop muted playsinline poster="images/Video Poster_3.png">
                     <source src="Video/sugarlump_school_video_v3.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
                 </video>
                 
                 <model-viewer 
@@ -179,13 +227,31 @@ h2 a:link, h2 a:visited {
                 <h2>no cost: <a href="https://sugarlump.love/contact" target="_blank">join sugarlump kindness club</a></h2>
             </div>
 
+            <p style="margin-top: 20px;">
+                <span class="launch-text" onclick="showBanner()">So Easy to Get Started! It's easy to get started...</span>
+            </p>
+
             <div class="footer-link">
                 <a href="https://avertek.net/" target="_blank">Contact AVERtek to learn more about XR marketing.</a>
             </div>
         </div>
     </div>
 
+    <div id="popup-banner" class="banner-container">
+        <div class="banner-content">
+            <img src="images/Pop-Up Banner1.png" alt="Banner" class="banner-bg">
+            <button class="close-btn" onclick="hideBanner()">×</button>
+        </div>
+    </div>
+
     <script>
+        function showBanner() {
+            document.getElementById('popup-banner').style.display = 'flex';
+        }
+        function hideBanner() {
+            document.getElementById('popup-banner').style.display = 'none';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const video = document.getElementById('myVideo');
             const wrapper = document.getElementById('video-wrapper');
@@ -197,12 +263,11 @@ h2 a:link, h2 a:visited {
             arSound.loop = true;
             let isPlaying = false;
 
-            // Audio Unlock Logic
             const initAudio = () => {
                 arSound.play().then(() => {
                     arSound.pause();
                     arSound.currentTime = 0;
-                }).catch(e => console.log("Interaction required"));
+                }).catch(e => console.log("Interaction needed"));
                 window.removeEventListener('touchstart', initAudio);
                 window.removeEventListener('click', initAudio);
             };
@@ -217,35 +282,27 @@ h2 a:link, h2 a:visited {
                     overlayImg.src = 'images/play_icon.png';
                     overlay.style.opacity = '1';
                 } else {
-                    // Try to force landscape on mobile
                     try {
                         if (wrapper.requestFullscreen) {
                             await wrapper.requestFullscreen();
                         } else if (wrapper.webkitRequestFullscreen) {
                             await wrapper.webkitRequestFullscreen();
                         }
-                        
-                        if (screen.orientation && screen.orientation.lock) {
-                            await screen.orientation.lock('landscape').catch(e => console.log("Orientation lock ignored"));
-                        }
                     } catch (err) {
-                        console.log("Fullscreen/Landscape blocked by browser policies.");
+                        console.log("Fullscreen blocked.");
                     }
 
                     video.muted = false;
                     video.play();
                     arSound.play();
                     overlayImg.src = 'images/pause_icon.png';
-                    // Hide overlay after a brief moment when playing
                     setTimeout(() => { if(isPlaying) overlay.style.opacity = '0'; }, 800);
                 }
                 isPlaying = !isPlaying;
             }
 
-            // Click anywhere on the video container to Play/Pause
             wrapper.addEventListener('click', togglePlayPause);
 
-            // Sync audio with AR session
             if (modelViewer) {
                 modelViewer.addEventListener('ar-status', (event) => {
                     if (event.detail.status === 'presenting') {
