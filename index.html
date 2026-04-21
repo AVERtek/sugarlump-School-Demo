@@ -4,17 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>sugarlump-School-Demo</title>
 
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=0-0000000000"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', '0-0000000000');
-    </script>
 
     <style>
         @font-face {
@@ -80,12 +73,6 @@
             transition: opacity 0.3s ease;
         }
 
-        .video-overlay img {
-            width: 80px;
-            height: 80px;
-            opacity: 0.8;
-        }
-
         #myVideo {
             width: 100%;
             height: 100%;
@@ -93,20 +80,6 @@
             z-index: 2;
         }
 
-        #myModelViewer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        #myModelViewer button[slot="ar-button"] {
-            display: none;
-        }
-
-        /* Link List Headers */
         .link-list h2 {
             font-family: 'Chalet LondonNineteenEighty Regular', sans-serif;
             color: #ff69b4;
@@ -117,77 +90,66 @@
         .link-list a {
             color: #59cbe8;
             text-decoration: underline !important;
-            text-decoration-color: currentColor !important;
             font-weight: bold;
         }
 
-        h2 a {
-            text-decoration: underline !important;
-            text-decoration-color: currentColor !important;
-            color: inherit;
-        }
-
-        /* The Launch Trigger (Blue Link) */
         .launch-text {
             color: #59cbe8;
             text-decoration: underline !important;
-            text-decoration-color: currentColor !important;
             cursor: pointer;
         }
 
-        .footer-link {
-            font-family: 'Chalet LondonNineteenEighty Regular';
-            color: #59cbe8;
-            font-size: 14px;
-            margin-top: 20px;
-        }
-
-        /* POP-UP BANNER STYLES */
+        /* --- FULLSCREEN BANNER STYLES --- */
         .banner-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: #000; /* Pure black like the video player */
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 10000;
         }
 
+        /* This handles the rotation and scaling automatically in Fullscreen */
         .banner-content {
-            position: relative;
             width: 100%;
-            max-width: 600px;
+            height: 100%;
             display: flex;
             justify-content: center;
+            align-items: center;
         }
 
         .banner-bg {
-            width: 100%;
-            height: auto;
-            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Ensures the banner isn't cropped when rotated */
         }
 
         .close-btn {
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.3);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             cursor: pointer;
-            font-size: 24px;
+            font-size: 32px;
             z-index: 10001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 
 <body>
+
     <div class="container">
         <div class="card">
             <img src="images/sugarlump_experience_AR_assets-01.png" alt="Sugarlump Logo" class="logo">
@@ -196,20 +158,12 @@
         <div class="card">
             <div class="viewer-container" id="video-wrapper">
                 <div class="video-overlay" id="overlay-icon">
-                    <img src="images/play_icon.png" alt="Play/Pause">
+                    <img src="images/play_icon.png" style="width:80px;">
                 </div>
-                
                 <video id="myVideo" loop muted playsinline poster="images/Video Poster_3.png">
                     <source src="Video/sugarlump_school_video_v3.mp4" type="video/mp4">
                 </video>
-                
-                <model-viewer 
-                    id="myModelViewer" 
-                    src="Models/entire_family_99cm.glb" 
-                    ios-src="Models/GIRL_converted.usdz" 
-                    ar ar-modes="quick-look webxr scene-viewer" 
-                    style="display: none;">
-                </model-viewer>
+                <model-viewer id="myModelViewer" src="Models/entire_family_99cm.glb" ios-src="Models/GIRL_converted.usdz" ar ar-modes="quick-look webxr scene-viewer" style="display: none;"></model-viewer>
             </div>
 
             <p style="font-family: 'Chalet LondonNineteenEighty Regular'; font-weight: bold; color: #000099; margin-top: 15px;">
@@ -226,10 +180,10 @@
 
             <p style="margin-top: 20px; font-family: 'Chalet LondonNineteenEighty Regular', sans-serif; font-size: 20px; font-weight: bold;">
                 <span style="color: #ff69b4;">So Easy to Get Started!</span> 
-                <span class="launch-text" onclick="showBanner()">It's easy to get started...</span>
+                <span class="launch-text" onclick="launchFullscreenBanner()">It's easy to get started...</span>
             </p>
 
-            <div class="footer-link">
+            <div class="footer-link" style="font-family: 'Chalet LondonNineteenEighty Regular'; color: #59cbe8; font-size: 14px; margin-top: 20px;">
                 <a href="https://avertek.net/" target="_blank">Contact AVERtek to learn more about XR marketing.</a>
             </div>
         </div>
@@ -238,78 +192,79 @@
     <div id="popup-banner" class="banner-container">
         <div class="banner-content">
             <img src="images/Pop-Up Banner1.png" alt="Banner" class="banner-bg">
-            <button class="close-btn" onclick="hideBanner()">×</button>
+            <button class="close-btn" onclick="exitFullscreenBanner()">×</button>
         </div>
     </div>
 
     <script>
-        function showBanner() {
-            document.getElementById('popup-banner').style.display = 'flex';
-        }
-        function hideBanner() {
-            document.getElementById('popup-banner').style.display = 'none';
+        const bannerContainer = document.getElementById('popup-banner');
+
+        async function launchFullscreenBanner() {
+            bannerContainer.style.display = 'flex';
+
+            try {
+                // Request Fullscreen (same logic as your video)
+                if (bannerContainer.requestFullscreen) {
+                    await bannerContainer.requestFullscreen();
+                } else if (bannerContainer.webkitRequestFullscreen) {
+                    await bannerContainer.webkitRequestFullscreen();
+                }
+
+                // Force Landscape Lock (Android/Chrome)
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape').catch(e => console.log("Orientation lock not supported on this device."));
+                }
+            } catch (err) {
+                console.log("Error attempting fullscreen:", err);
+            }
         }
 
+        function exitFullscreenBanner() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            // Cleanup in case user exits via hardware back button
+            bannerContainer.style.display = 'none';
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
+            }
+        }
+
+        // Handle the case where the user exits fullscreen using system gestures/buttons
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                bannerContainer.style.display = 'none';
+            }
+        });
+        document.addEventListener('webkitfullscreenchange', () => {
+            if (!document.webkitFullscreenElement) {
+                bannerContainer.style.display = 'none';
+            }
+        });
+
+        // Your existing Video/AR Logic
         document.addEventListener('DOMContentLoaded', () => {
             const video = document.getElementById('myVideo');
             const wrapper = document.getElementById('video-wrapper');
             const overlay = document.getElementById('overlay-icon');
-            const overlayImg = overlay.querySelector('img');
-            const modelViewer = document.getElementById('myModelViewer');
-
             const arSound = new Audio('Sound/sweet_neighbor_of_mine3.mp3');
             arSound.loop = true;
             let isPlaying = false;
 
-            const initAudio = () => {
-                arSound.play().then(() => {
-                    arSound.pause();
-                    arSound.currentTime = 0;
-                }).catch(e => console.log("Audio unlock needed"));
-                window.removeEventListener('touchstart', initAudio);
-                window.removeEventListener('click', initAudio);
-            };
-            window.addEventListener('touchstart', initAudio);
-            window.addEventListener('click', initAudio);
-
-            async function togglePlayPause() {
+            wrapper.addEventListener('click', () => {
                 if (isPlaying) {
                     video.pause();
                     arSound.pause();
-                    video.muted = true;
-                    overlayImg.src = 'images/play_icon.png';
                     overlay.style.opacity = '1';
                 } else {
-                    try {
-                        if (wrapper.requestFullscreen) {
-                            await wrapper.requestFullscreen();
-                        } else if (wrapper.webkitRequestFullscreen) {
-                            await wrapper.webkitRequestFullscreen();
-                        }
-                    } catch (err) {
-                        console.log("Fullscreen rejected.");
-                    }
-
-                    video.muted = false;
                     video.play();
                     arSound.play();
-                    overlayImg.src = 'images/pause_icon.png';
-                    setTimeout(() => { if(isPlaying) overlay.style.opacity = '0'; }, 800);
+                    overlay.style.opacity = '0';
                 }
                 isPlaying = !isPlaying;
-            }
-
-            wrapper.addEventListener('click', togglePlayPause);
-
-            if (modelViewer) {
-                modelViewer.addEventListener('ar-status', (event) => {
-                    if (event.detail.status === 'presenting') {
-                        arSound.play();
-                    } else {
-                        arSound.pause();
-                    }
-                });
-            }
+            });
         });
     </script>
 </body>
