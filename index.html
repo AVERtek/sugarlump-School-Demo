@@ -67,6 +67,24 @@
             background: #000;
             border-radius: 6px;
             overflow: hidden;
+            cursor: pointer;
+        }
+
+        /* The Play Button Overlay */
+        .video-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass through to container */
+            transition: opacity 0.3s ease;
+        }
+
+        .video-overlay img {
+            width: 80px;
+            height: 80px;
+            opacity: 0.8;
         }
 
         #myVideo {
@@ -87,40 +105,6 @@
 
         #myModelViewer button[slot="ar-button"] {
             display: none;
-        }
-
-        .button-container {
-            margin: 30px 0;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .action-button {
-            background-color: #ffffff;
-            border-radius: 8px;
-            border: 2px solid #59cbe8;
-            height: 60px;
-            min-width: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .action-button:hover {
-            background-color: #f0f8ff;
-            border-color: #48b0cc;
-        }
-
-        .action-button-text {
-            font-size: 32px;
-            color: #000099;
-            font-family: 'Chalet LondonNineteenEighty Regular', sans-serif;
-            white-space: nowrap;
-            font-weight: bold;
         }
 
         .link-list h2 {
@@ -152,7 +136,11 @@
         </div>
 
         <div class="card">
-            <div class="viewer-container">
+            <div class="viewer-container" id="video-wrapper">
+                <div class="video-overlay" id="overlay-icon">
+                    <img src="images/play_icon.png" alt="Play/Pause">
+                </div>
+                
                 <video id="myVideo" loop muted playsinline poster="images/Video Poster_3.png">
                     <source src="Video/sugarlump_school_video_v3.mp4" type="video/mp4">
                     Your browser does not support the video tag.
@@ -171,14 +159,6 @@
                 Make Sure Sound is On!
             </p>
 
-            <div class="button-container">
-                <div class="action-button" id="play-pause-button">
-                    <img id="play-pause-icon" src="images/play_icon.png" style="height: 40px; margin-right: 10px;" alt="Play">
-                    <span class="action-button-text">Play</span>
-                </div>
-                
-                </div>
-
             <div class="link-list">
                 <img src="images/erin_video_scenes-34.png" style="width: 300px; max-width: 90%; margin-bottom: 10px;">
                 <h2>why: <a href="https://sugarlump.love/" target="_blank">the kindness project</a></h2>
@@ -196,65 +176,62 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const video = document.getElementById('myVideo');
+            const wrapper = document.getElementById('video-wrapper');
+            const overlay = document.getElementById('overlay-icon');
+            const overlayImg = overlay.querySelector('img');
             const modelViewer = document.getElementById('myModelViewer');
-            const playPauseButton = document.getElementById('play-pause-button');
-            const playPauseIcon = document.getElementById('play-pause-icon');
-            const arButton = document.getElementById('ar-button');
-            const btnText = playPauseButton.querySelector('.action-button-text');
 
             const arSound = new Audio('Sound/sweet_neighbor_of_mine3.mp3');
             arSound.loop = true;
             let isPlaying = false;
 
-            // Audio Unlock
+            // Audio Unlock Logic
             const initAudio = () => {
                 arSound.play().then(() => {
                     arSound.pause();
                     arSound.currentTime = 0;
-                }).catch(e => console.log("Interaction required for audio"));
+                }).catch(e => console.log("Interaction required"));
                 window.removeEventListener('touchstart', initAudio);
                 window.removeEventListener('click', initAudio);
             };
             window.addEventListener('touchstart', initAudio);
             window.addEventListener('click', initAudio);
 
-            function togglePlayPause() {
+            async function togglePlayPause() {
                 if (isPlaying) {
                     video.pause();
                     arSound.pause();
                     video.muted = true;
-                    playPauseIcon.src = 'images/play_icon.png';
-                    btnText.textContent = 'Play';
+                    overlayImg.src = 'images/play_icon.png';
+                    overlay.style.opacity = '1';
                 } else {
+                    // Try to force landscape on mobile
+                    try {
+                        if (wrapper.requestFullscreen) {
+                            await wrapper.requestFullscreen();
+                        } else if (wrapper.webkitRequestFullscreen) {
+                            await wrapper.webkitRequestFullscreen();
+                        }
+                        
+                        if (screen.orientation && screen.orientation.lock) {
+                            await screen.orientation.lock('landscape').catch(e => console.log("Orientation lock ignored"));
+                        }
+                    } catch (err) {
+                        console.log("Fullscreen/Landscape blocked by browser policies.");
+                    }
+
                     video.muted = false;
                     video.play();
                     arSound.play();
-                    playPauseIcon.src = 'images/pause_icon.png';
-                    btnText.textContent = 'Pause';
+                    overlayImg.src = 'images/pause_icon.png';
+                    // Hide overlay after a brief moment when playing
+                    setTimeout(() => { if(isPlaying) overlay.style.opacity = '0'; }, 800);
                 }
                 isPlaying = !isPlaying;
             }
 
-            if (playPauseButton) {
-                playPauseButton.addEventListener('click', togglePlayPause);
-            }
-
-            // AR Activation Logic
-            if (arButton && modelViewer) {
-                arButton.addEventListener('click', () => {
-                    video.pause();
-                    video.muted = true;
-                    isPlaying = false;
-                    playPauseIcon.src = 'images/play_icon.png';
-                    btnText.textContent = 'Play';
-
-                    if (modelViewer.canActivateAR) {
-                        modelViewer.activateAR();
-                    } else {
-                        alert("AR is supported only on mobile devices.");
-                    }
-                });
-            }
+            // Click anywhere on the video container to Play/Pause
+            wrapper.addEventListener('click', togglePlayPause);
 
             // Sync audio with AR session
             if (modelViewer) {
