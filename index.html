@@ -8,6 +8,14 @@
     <title>sugarlump-School-Demo</title>
 
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=0-0000000000"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '0-0000000000');
+    </script>
 
     <style>
         @font-face {
@@ -73,15 +81,26 @@
             transition: opacity 0.3s ease;
         }
 
-        /* The critical fix for iOS Video Fill */
         #myVideo {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Forces video to fill the container/screen */
+            object-fit: cover;
             z-index: 2;
         }
 
-        /* Standard Link Styling */
+        #myModelViewer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #myModelViewer button[slot="ar-button"] {
+            display: none;
+        }
+
         .link-list h2 {
             font-family: 'Chalet LondonNineteenEighty Regular', sans-serif;
             color: #ff69b4;
@@ -89,19 +108,15 @@
             margin: 10px 0;
         }
 
-        .link-list a {
+        .link-list a, .launch-text {
             color: #59cbe8;
             text-decoration: underline !important;
+            text-decoration-color: currentColor !important;
             font-weight: bold;
-        }
-
-        .launch-text {
-            color: #59cbe8;
-            text-decoration: underline !important;
             cursor: pointer;
         }
 
-        /* --- FULLSCREEN BANNER STYLES --- */
+        /* --- PORTRAIT OPTIMIZED BANNER --- */
         .banner-container {
             position: fixed;
             top: 0;
@@ -121,16 +136,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.3s ease;
-        }
-
-        /* CSS Fallback for iOS Portrait */
-        @media screen and (orientation: portrait) {
-            .banner-container.active-ios .banner-content {
-                transform: rotate(90deg);
-                width: 100vh;
-                height: 100vw;
-            }
         }
 
         .banner-bg {
@@ -160,7 +165,6 @@
 </head>
 
 <body>
-
     <div class="container">
         <div class="card">
             <img src="images/sugarlump_experience_AR_assets-01.png" alt="Sugarlump Logo" class="logo">
@@ -171,10 +175,18 @@
                 <div class="video-overlay" id="overlay-icon">
                     <img src="images/play_icon.png" style="width:80px;">
                 </div>
+                
                 <video id="myVideo" loop muted playsinline poster="images/Video Poster_3.png">
                     <source src="Video/sugarlump_school_video_v3.mp4" type="video/mp4">
                 </video>
-                <model-viewer id="myModelViewer" src="Models/entire_family_99cm.glb" ios-src="Models/GIRL_converted.usdz" ar ar-modes="quick-look webxr scene-viewer" style="display: none;"></model-viewer>
+                
+                <model-viewer 
+                    id="myModelViewer" 
+                    src="Models/entire_family_99cm.glb" 
+                    ios-src="Models/GIRL_converted.usdz" 
+                    ar ar-modes="quick-look webxr scene-viewer" 
+                    style="display: none;">
+                </model-viewer>
             </div>
 
             <p style="font-family: 'Chalet LondonNineteenEighty Regular'; font-weight: bold; color: #000099; margin-top: 15px;">
@@ -193,7 +205,7 @@
                 <span style="color: #ff69b4;">Spot a sugarlump sticker:</span> 
                 <span class="launch-text" onclick="launchFullscreenBanner()">this is all you do!</span>
             </p>
-
+            
             <div class="footer-link" style="font-family: 'Chalet LondonNineteenEighty Regular'; color: #59cbe8; font-size: 14px; margin-top: 20px;">
                 <a href="https://avertek.net/" target="_blank">Contact AVERtek to learn more about XR marketing.</a>
             </div>
@@ -202,7 +214,7 @@
 
     <div id="popup-banner" class="banner-container">
         <div class="banner-content">
-            <img src="images/Pop-Up Banner3.png" alt="Banner" class="banner-bg">
+            <img src="images/Pop-Up Banner4.png" alt="Banner" class="banner-bg">
             <button class="close-btn" onclick="exitFullscreenBanner()">×</button>
         </div>
     </div>
@@ -220,13 +232,15 @@
 
         async function launchFullscreenBanner() {
             bannerContainer.style.display = 'flex';
-            bannerContainer.classList.add('active-ios');
             try {
-                if (bannerContainer.requestFullscreen) await bannerContainer.requestFullscreen();
-                else if (bannerContainer.webkitRequestFullscreen) await bannerContainer.webkitRequestFullscreen();
-
+                if (bannerContainer.requestFullscreen) {
+                    await bannerContainer.requestFullscreen();
+                } else if (bannerContainer.webkitRequestFullscreen) {
+                    await bannerContainer.webkitRequestFullscreen();
+                }
+                // Lock specifically for the vertical banner image
                 if (screen.orientation && screen.orientation.lock) {
-                    await screen.orientation.lock('landscape').catch(() => {});
+                    await screen.orientation.lock('portrait').catch(() => {});
                 }
             } catch (err) {}
         }
@@ -238,46 +252,39 @@
         }
 
         wrapper.addEventListener('click', async () => {
+            video.muted = false;
             if (isPlaying) {
                 video.pause();
                 arSound.pause();
                 overlay.style.opacity = '1';
                 isPlaying = false;
             } else {
-                // Unlock audio
-                video.muted = false;
-                const playPromise = video.play();
-                arSound.play();
+                try {
+                    const playPromise = video.play();
+                    arSound.play();
 
-                if (playPromise !== undefined) {
-                    playPromise.then(async () => {
-                        overlay.style.opacity = '0';
-                        isPlaying = true;
+                    if (playPromise !== undefined) {
+                        playPromise.then(async () => {
+                            overlay.style.opacity = '0';
+                            isPlaying = true;
 
-                        if (isIOS) {
-                            // On iOS, we call fullscreen on the video directly
-                            if (video.webkitEnterFullscreen) {
-                                video.webkitEnterFullscreen();
-                            } else if (video.webkitRequestFullscreen) {
-                                video.webkitRequestFullscreen();
+                            if (isIOS) {
+                                if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+                            } else {
+                                if (wrapper.requestFullscreen) await wrapper.requestFullscreen();
+                                if (screen.orientation && screen.orientation.lock) {
+                                    await screen.orientation.lock('landscape').catch(() => {});
+                                }
                             }
-                        } else {
-                            // Android Logic
-                            if (wrapper.requestFullscreen) await wrapper.requestFullscreen();
-                            if (screen.orientation && screen.orientation.lock) {
-                                await screen.orientation.lock('landscape').catch(() => {});
-                            }
-                        }
-                    }).catch(e => console.log(e));
-                }
+                        });
+                    }
+                } catch (e) {}
             }
         });
 
-        // Ensure banner closes if user exits fullscreen via system gesture
         const cleanup = () => {
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 bannerContainer.style.display = 'none';
-                bannerContainer.classList.remove('active-ios');
             }
         };
         document.addEventListener('fullscreenchange', cleanup);
