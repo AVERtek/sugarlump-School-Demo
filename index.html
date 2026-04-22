@@ -206,83 +206,94 @@
     </div>
 
     <script>
-        const video = document.getElementById('myVideo');
-        const wrapper = document.getElementById('video-wrapper');
-        const overlay = document.getElementById('overlay-icon');
-        const bannerContainer = document.getElementById('popup-banner');
-        const arSound = new Audio('Sound/sweet_neighbor_of_mine3.mp3');
-        arSound.loop = true;
-        let isPlaying = false;
+    const video = document.getElementById('myVideo');
+    const wrapper = document.getElementById('video-wrapper');
+    const overlay = document.getElementById('overlay-icon');
+    const bannerContainer = document.getElementById('popup-banner');
+    const arSound = new Audio('Sound/sweet_neighbor_of_mine3.mp3');
+    arSound.loop = true;
+    let isPlaying = false;
 
-        // --- HANDLER FUNCTIONS ---
+    // Detect if the device is an iPhone/iPad
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        async function requestOrientationAndFullscreen(element) {
-            try {
-                // Request Fullscreen
-                if (element.requestFullscreen) {
-                    await element.requestFullscreen();
-                } else if (element.webkitRequestFullscreen) {
-                    await element.webkitRequestFullscreen();
-                }
+    async function launchFullscreenBanner() {
+        bannerContainer.style.display = 'flex';
+        bannerContainer.classList.add('active-ios'); 
 
-                // Android Landscape Lock
-                if (screen.orientation && screen.orientation.lock) {
-                    await screen.orientation.lock('landscape').catch(e => console.log("Orientation lock not supported."));
-                }
-            } catch (err) {
-                console.log("Fullscreen/Orientation error:", err);
+        try {
+            if (bannerContainer.requestFullscreen) {
+                await bannerContainer.requestFullscreen();
+            } else if (bannerContainer.webkitRequestFullscreen) {
+                await bannerContainer.webkitRequestFullscreen();
+            }
+
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape').catch(e => console.log("Lock blocked."));
+            }
+        } catch (err) {
+            console.log("Banner FS Error:", err);
+        }
+    }
+
+    function exitFullscreenBanner() {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        bannerContainer.style.display = 'none';
+        bannerContainer.classList.remove('active-ios');
+    }
+
+    wrapper.addEventListener('click', async () => {
+        if (isPlaying) {
+            video.pause();
+            arSound.pause();
+            overlay.style.opacity = '1';
+            isPlaying = false;
+        } else {
+            // 1. iOS Handshake: Unmute and play immediately
+            video.muted = false;
+            const playPromise = video.play();
+            arSound.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(async () => {
+                    overlay.style.opacity = '0';
+                    isPlaying = true;
+
+                    // 2. THE ROTATION FIX:
+                    // On iOS, we MUST request fullscreen on the VIDEO itself to allow rotation.
+                    // On Android, we request it on the WRAPPER to keep our custom UI/Overlay visible.
+                    if (isIOS) {
+                        if (video.webkitEnterFullscreen) {
+                            video.webkitEnterFullscreen();
+                        } else if (video.webkitRequestFullscreen) {
+                            video.webkitRequestFullscreen();
+                        }
+                    } else {
+                        // Standard Android Logic
+                        if (wrapper.requestFullscreen) {
+                            await wrapper.requestFullscreen();
+                        }
+                        if (screen.orientation && screen.orientation.lock) {
+                            await screen.orientation.lock('landscape').catch(e => {});
+                        }
+                    }
+                }).catch(error => {
+                    console.log("Playback blocked:", error);
+                });
             }
         }
+    });
 
-        async function launchFullscreenBanner() {
-            bannerContainer.style.display = 'flex';
-            bannerContainer.classList.add('active-ios'); // Trigger CSS rotation for iOS
-            await requestOrientationAndFullscreen(bannerContainer);
-        }
-
-        function exitFullscreenBanner() {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    // Cleanup listeners
+    const cleanup = () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             bannerContainer.style.display = 'none';
             bannerContainer.classList.remove('active-ios');
         }
-
-        // --- VIDEO & AUDIO LOGIC (The iOS Handshake) ---
-
-        wrapper.addEventListener('click', async () => {
-            if (isPlaying) {
-                video.pause();
-                arSound.pause();
-                overlay.style.opacity = '1';
-                isPlaying = false;
-            } else {
-                // 1. Unmute & Play Video FIRST (iOS requirement)
-                video.muted = false;
-                const playPromise = video.play();
-                arSound.play();
-
-                if (playPromise !== undefined) {
-                    playPromise.then(async () => {
-                        // 2. Once audio is confirmed playing, trigger landscape fullscreen
-                        overlay.style.opacity = '0';
-                        isPlaying = true;
-                        await requestOrientationAndFullscreen(wrapper);
-                    }).catch(error => {
-                        console.log("Auto-play prevented:", error);
-                    });
-                }
-            }
-        });
-
-        // Listeners for System Exits
-        const cleanup = () => {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                bannerContainer.style.display = 'none';
-                bannerContainer.classList.remove('active-ios');
-            }
-        };
-        document.addEventListener('fullscreenchange', cleanup);
-        document.addEventListener('webkitfullscreenchange', cleanup);
-    </script>
+    };
+    document.addEventListener('fullscreenchange', cleanup);
+    document.addEventListener('webkitfullscreenchange', cleanup);
+</script>
 </body>
 </html>
