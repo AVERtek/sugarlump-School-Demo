@@ -18,6 +18,20 @@
     </script>
 
     <style>
+        .social-icons a {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.social-icons a:hover {
+    transform: scale(1.1); /* Slightly grows when hovered */
+}
+
+.social-icons img {
+    display: block;
+    /* This ensures they look sharp on high-res screens */
+    image-rendering: -webkit-optimize-contrast; 
+}
         @font-face {
             font-family: 'Chalet LondonNineteenEighty Regular';
             src: url('fonts/Chalet LondonNineteenEighty Regular.otf') format('opentype');
@@ -205,7 +219,18 @@
                 <span style="color: #ff69b4;">Spot a sugarlump sticker:</span> 
                 <span class="launch-text" onclick="launchFullscreenBanner()">this is all you do!</span>
             </p>
-            
+
+            <div class="social-icons" style="margin-top: 20px; display: flex; justify-content: center; gap: 20px;">
+    <a href="https://www.facebook.com/sugarlumploves" target="_blank">
+        <img src="images/facebook_icon.png" alt="Facebook" style="width: 30px; height: auto;">
+    </a>
+    <a href="https://www.instagram.com/sugarlumplove" target="_blank">
+        <img src="images/instagram_icon.png" alt="Instagram" style="width: 30px; height: auto;">
+    </a>
+    <a href="https://www.tiktok.com/@sugarlump_love" target="_blank">
+        <img src="images/tiktok_icon.png" alt="TikTok" style="width: 30px; height: auto;">
+    </a>
+</div>
             <div class="footer-link" style="font-family: 'Chalet LondonNineteenEighty Regular'; color: #59cbe8; font-size: 14px; margin-top: 20px;">
                 <a href="https://avertek.net/" target="_blank">Contact AVERtek to learn more about XR marketing.</a>
             </div>
